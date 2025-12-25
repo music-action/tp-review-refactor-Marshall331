@@ -1,18 +1,11 @@
 /* eslint-disable */
 
 export class Game {
-  private _lastSymbol = ' ';
+  public static readonly EMPTY_PLAY = " ";
+  public static readonly PLAYER_O = "O";
+
+  private _lastSymbol = Game.EMPTY_PLAY;
   private _board: Board = new Board();
-
-  private readonly playerO = 'O';
-  private readonly emptyPlay = ' ';
-
-  private readonly firstRow = 0;
-  private readonly secondRow = 1;
-  private readonly thirdRow = 2;
-  private readonly firstColumn = 0;
-  private readonly secondColumn = 1;
-  private readonly thirdColumn = 2;
 
   public Play(symbol: string, x: number, y: number): void {
     this.validateFirstMove(symbol);
@@ -23,99 +16,64 @@ export class Game {
     this.updateBoard(symbol, x, y);
   }
 
-  private validateFirstMove(player: string) {
-    if (this._lastSymbol == this.emptyPlay) {
-      if (player == this.playerO) {
-        throw new Error('Invalid first player');
-      }
+  private validateFirstMove(player: string): void {
+    if (this._lastSymbol === Game.EMPTY_PLAY && player === Game.PLAYER_O) {
+      throw new Error("Invalid first player");
     }
   }
 
-  private validatePlayer(player: string) {
-    if (player == this._lastSymbol) {
-      throw new Error('Invalid next player');
+  private validatePlayer(player: string): void {
+    if (player === this._lastSymbol) {
+      throw new Error("Invalid next player");
     }
   }
 
-  private validatePositionIsEmpty(x: number, y: number) {
-    if (this._board.TileAt(x, y).Symbol != this.emptyPlay) {
-      throw new Error('Invalid position');
+  private validatePositionIsEmpty(x: number, y: number): void {
+    if (this._board.TileAt(x, y).Symbol !== Game.EMPTY_PLAY) {
+      throw new Error("Invalid position");
     }
   }
 
-  private updateLastPlayer(player: string) {
+  private updateLastPlayer(player: string): void {
     this._lastSymbol = player;
   }
 
-  private updateBoard(player: string, x: number, y: number) {
+  private updateBoard(player: string, x: number, y: number): void {
     this._board.AddTileAt(player, x, y);
   }
 
   public Winner(): string {
-    if (this.isFirstRowFull() && this.isFirstRowFullWithSameSymbol()) {
-      return this._board.TileAt(this.firstRow, this.firstColumn)!.Symbol;
+    for (let row = 0; row < 3; row++) {
+      if (this.isRowWinner(row)) {
+        return this._board.TileAt(row, 0).Symbol;
+      }
     }
 
-    if (this.isSecondRowFull() && this.isSecondRowFullWithSameSymbol()) {
-      return this._board.TileAt(this.secondRow, this.firstColumn)!.Symbol;
+    return Game.EMPTY_PLAY;
+  }
+
+  private isRowWinner(row: number): boolean {
+    return this.isRowFull(row) && this.isRowWithSameSymbol(row);
+  }
+
+  private isRowFull(row: number): boolean {
+    for (let column = 0; column < 3; column++) {
+      if (this._board.TileAt(row, column).Symbol === Game.EMPTY_PLAY) {
+        return false;
+      }
     }
+    return true;
+  }
 
-    if (this.isThirdRowFull() && this.isThirdRowFullWithSameSymbol()) {
-      return this._board.TileAt(this.thirdRow, this.firstColumn)!.Symbol;
+  private isRowWithSameSymbol(row: number): boolean {
+    const firstSymbol = this._board.TileAt(row, 0).Symbol;
+
+    for (let column = 1; column < 3; column++) {
+      if (this._board.TileAt(row, column).Symbol !== firstSymbol) {
+        return false;
+      }
     }
-
-    return this.emptyPlay;
-  }
-
-  private isFirstRowFull() {
-    return (
-      this._board.TileAt(this.firstRow, this.firstColumn)!.Symbol != this.emptyPlay &&
-      this._board.TileAt(this.firstRow, this.secondColumn)!.Symbol != this.emptyPlay &&
-      this._board.TileAt(this.firstRow, this.thirdColumn)!.Symbol != this.emptyPlay
-    );
-  }
-
-  private isFirstRowFullWithSameSymbol() {
-    return (
-      this._board.TileAt(this.firstRow, this.firstColumn)!.Symbol ==
-        this._board.TileAt(this.firstRow, this.secondColumn)!.Symbol &&
-      this._board.TileAt(this.firstRow, this.thirdColumn)!.Symbol ==
-        this._board.TileAt(this.firstRow, this.secondColumn)!.Symbol
-    );
-  }
-
-  private isSecondRowFull() {
-    return (
-      this._board.TileAt(this.secondRow, this.firstColumn)!.Symbol != this.emptyPlay &&
-      this._board.TileAt(this.secondRow, this.secondColumn)!.Symbol != this.emptyPlay &&
-      this._board.TileAt(this.secondRow, this.thirdColumn)!.Symbol != this.emptyPlay
-    );
-  }
-
-  private isSecondRowFullWithSameSymbol() {
-    return (
-      this._board.TileAt(this.secondRow, this.firstColumn)!.Symbol ==
-        this._board.TileAt(this.secondRow, this.secondColumn)!.Symbol &&
-      this._board.TileAt(this.secondRow, this.thirdColumn)!.Symbol ==
-        this._board.TileAt(this.secondRow, this.secondColumn)!.Symbol
-    );
-  }
-
-  private isThirdRowFull() {
-    return (
-      this._board.TileAt(this.thirdRow, this.firstColumn)!.Symbol != this.emptyPlay &&
-      this._board.TileAt(this.thirdRow, this.secondColumn)!.Symbol != this.emptyPlay &&
-      this._board.TileAt(this.thirdRow, this.thirdColumn)!.Symbol != this.emptyPlay
-    );
-  }
-
-  private isThirdRowFullWithSameSymbol() {
-    return (
-      this._board.TileAt(this.thirdRow, this.firstColumn)!.Symbol ==
-        this._board.TileAt(this.thirdRow, this.secondColumn)!.Symbol &&
-      this._board.TileAt(this.thirdRow, this.thirdColumn)!.Symbol ==
-        this._board.TileAt(this.thirdRow, this.secondColumn)!.Symbol
-    );
+    return true;
   }
 }
 
@@ -129,19 +87,18 @@ class Board {
   private _plays: Tile[] = [];
 
   constructor() {
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        const tile: Tile = { X: i, Y: j, Symbol: ' ' };
-        this._plays.push(tile);
+    for (let x = 0; x < 3; x++) {
+      for (let y = 0; y < 3; y++) {
+        this._plays.push({ X: x, Y: y, Symbol: Game.EMPTY_PLAY });
       }
     }
   }
 
   public TileAt(x: number, y: number): Tile {
-    return this._plays.find((t: Tile) => t.X == x && t.Y == y)!;
+    return this._plays.find(t => t.X === x && t.Y === y)!;
   }
 
   public AddTileAt(symbol: string, x: number, y: number): void {
-    this._plays.find((t: Tile) => t.X == x && t.Y == y)!.Symbol = symbol;
+    this.TileAt(x, y).Symbol = symbol;
   }
 }
