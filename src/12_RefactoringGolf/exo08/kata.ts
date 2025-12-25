@@ -1,156 +1,152 @@
 /* eslint-disable */
 
-const firstRow = 0;
-const secondRow = 1;
-const thirdRow = 2;
-const firstColumn = 0;
-const secondColumn = 1;
-const thirdColumn = 2;
+export enum Row {
+  Top = 0,
+  Middle = 1,
+  Bottom = 2,
+}
 
-const playerO = 'O';
-const noPlayer = ' ';
+export enum Column {
+  Left = 0,
+  Center = 1,
+  Right = 2,
+}
+
+const playerO = "O";
+const noPlayer = " ";
 
 export class Game {
-private _lastPlayer = noPlayer;
-private _board: Board = new Board();
+  private _lastPlayer = noPlayer;
+  private _board: Board = new Board();
 
-public Play(player: string, x: number, y: number): void {
-  this.validateFirstMove(player);
-  this.validatePlayer(player);
-  this.validatePositionIsEmpty(x, y);
+  public Play(player: string, position: Position): void {
+    this.validateFirstMove(player);
+    this.validatePlayer(player);
+    this.validatePositionIsEmpty(position);
 
-  this.updateLastPlayer(player);
-  this.updateBoard(new Tile(x, y, player));
-}
+    this.updateLastPlayer(player);
+    this.updateBoard(new Tile(position, player));
+  }
 
-private validateFirstMove(player: string) {
-  if (this._lastPlayer == noPlayer) {
-    if (player == playerO) {
-      throw new Error('Invalid first player');
+  private validateFirstMove(player: string) {
+    if (this._lastPlayer == noPlayer) {
+      if (player == playerO) {
+        throw new Error("Invalid first player");
+      }
     }
   }
-}
 
-private validatePlayer(player: string) {
-  if (player == this._lastPlayer) {
-    throw new Error('Invalid next player');
+  private validatePlayer(player: string) {
+    if (player == this._lastPlayer) {
+      throw new Error("Invalid next player");
+    }
+  }
+
+  private validatePositionIsEmpty(position: Position) {
+    if (this._board.isTilePlayedAt(position)) {
+      throw new Error("Invalid position");
+    }
+  }
+
+  private updateLastPlayer(player: string) {
+    this._lastPlayer = player;
+  }
+
+  private updateBoard(tile: Tile) {
+    this._board.AddTileAt(tile);
+  }
+
+  public Winner(): string {
+    return this._board.findRowFullWithSamePlayer();
   }
 }
 
-private validatePositionIsEmpty(x: number, y: number) {
-  if (this._board.isTilePlayedAt(x, y)) {
-    throw new Error('Invalid position');
-  }
-}
-
-private updateLastPlayer(player: string) {
-  this._lastPlayer = player;
-}
-
-private updateBoard(tile: Tile) {
-  this._board.AddTileAt(tile);
-}
-
-public Winner(): string {
-  return this._board.findRowFullWithSamePlayer();
-}
+export class Position {
+  constructor(public readonly row: Row, public readonly column: Column) {}
 }
 
 class Tile {
-private x: number = 0;
-private y: number = 0;
-private player: string = noPlayer;
+  constructor(private position: Position, private player: string) {}
 
-constructor(x: number, y: number, player: string) {
-  this.x = x;
-  this.y = y;
-  this.player = player;
-}
+  get Player() {
+    return this.player;
+  }
 
-get Player() {
-  return this.player;
-}
+  get isNotEmpty() {
+    return this.Player !== noPlayer;
+  }
 
-get isNotEmpty() {
-  return this.Player !== noPlayer;
-}
+  hasSamePlayerAs(other: Tile) {
+    return this.Player === other.Player;
+  }
 
-hasSamePlayerAs(other: Tile) {
-  return this.Player === other.Player;
-}
+  hasSamePositionAs(other: Tile) {
+    return this.position.row === other.position.row && this.position.column === other.position.column;
+  }
 
-hasSameCoordinatesAs(other: Tile) {
-  return this.x == other.x && this.y == other.y;
-}
-
-updatePlayer(newPlayer: string) {
-  this.player = newPlayer;
-}
+  updatePlayer(newPlayer: string) {
+    this.player = newPlayer;
+  }
 }
 
 class Board {
-private _plays: Tile[] = [];
+  private _plays: Tile[] = [];
 
-constructor() {
-  for (let x = firstRow; x <= thirdRow; x++) {
-    for (let y = firstColumn; y <= thirdColumn; y++) {
-      this._plays.push(new Tile(x, y, noPlayer));
+  constructor() {
+    for (const row of [Row.Top, Row.Middle, Row.Bottom]) {
+      for (const column of [Column.Left, Column.Center, Column.Right]) {
+        this._plays.push(new Tile(new Position(row, column), noPlayer));
+      }
     }
   }
-}
 
-public isTilePlayedAt(x: number, y: number) {
-  return this.findTileAt(new Tile(x, y, noPlayer))!.isNotEmpty;
-}
-
-public AddTileAt(tile: Tile): void {
-  this.findTileAt(tile)!.updatePlayer(tile.Player);
-}
-
-public findRowFullWithSamePlayer(): string {
-  if (this.isRowFull(firstRow) && this.isRowFullWithSamePlayer(firstRow)) {
-    return this.playerAt(firstRow, firstColumn);
+  public isTilePlayedAt(position: Position) {
+    return this.findTileAt(new Tile(position, noPlayer))!.isNotEmpty;
   }
 
-  if (this.isRowFull(secondRow) && this.isRowFullWithSamePlayer(secondRow)) {
-    return this.playerAt(secondRow, firstColumn);
+  public AddTileAt(tile: Tile): void {
+    this.findTileAt(tile)!.updatePlayer(tile.Player);
   }
 
-  if (this.isRowFull(thirdRow) && this.isRowFullWithSamePlayer(thirdRow)) {
-    return this.playerAt(thirdRow, firstColumn);
+  public findRowFullWithSamePlayer(): string {
+    for (const row of [Row.Top, Row.Middle, Row.Bottom]) {
+      if (this.isRowFull(row) && this.isRowFullWithSamePlayer(row)) {
+        return this.playerAt(row, Column.Left);
+      }
+    }
+    return noPlayer;
   }
 
-  return noPlayer;
-}
+  private findTileAt(tile: Tile) {
+    return this._plays.find((t: Tile) => t.hasSamePositionAs(tile));
+  }
 
-private findTileAt(tile: Tile) {
-  return this._plays.find((t: Tile) => t.hasSameCoordinatesAs(tile));
-}
+  private hasSamePlayer(row: Row, column1: Column, column2: Column) {
+    return this.TileAt(row, column1)!.hasSamePlayerAs(this.TileAt(row, column2)!);
+  }
 
-private hasSamePlayer(x: number, y: number, otherX: number, otherY: number) {
-  return this.TileAt(x, y)!.hasSamePlayerAs(this.TileAt(otherX, otherY)!);
-}
+  private playerAt(row: Row, column: Column) {
+    return this.TileAt(row, column)!.Player;
+  }
 
-private playerAt(x: number, y: number) {
-  return this.TileAt(x, y)!.Player;
-}
+  private TileAt(row: Row, column: Column): Tile {
+    return this._plays.find((t: Tile) =>
+      t.hasSamePositionAs(new Tile(new Position(row, column), noPlayer))
+    )!;
+  }
 
-private TileAt(x: number, y: number): Tile {
-  return this._plays.find((t: Tile) => t.hasSameCoordinatesAs(new Tile(x, y, noPlayer)))!;
-}
+  private isRowFull(row: Row) {
+    return (
+      this.isTilePlayedAt(new Position(row, Column.Left)) &&
+      this.isTilePlayedAt(new Position(row, Column.Center)) &&
+      this.isTilePlayedAt(new Position(row, Column.Right))
+    );
+  }
 
-private isRowFull(row: number) {
-  return (
-    this.isTilePlayedAt(row, firstColumn) &&
-    this.isTilePlayedAt(row, secondColumn) &&
-    this.isTilePlayedAt(row, thirdColumn)
-  );
-}
-
-private isRowFullWithSamePlayer(row: number) {
-  return (
-    this.hasSamePlayer(row, firstColumn, row, secondColumn) &&
-    this.hasSamePlayer(row, secondColumn, row, thirdColumn)
-  );
-}
+  private isRowFullWithSamePlayer(row: Row) {
+    return (
+      this.hasSamePlayer(row, Column.Left, Column.Center) &&
+      this.hasSamePlayer(row, Column.Center, Column.Right)
+    );
+  }
 }
