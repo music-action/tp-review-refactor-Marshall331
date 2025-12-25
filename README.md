@@ -1,3 +1,6 @@
+## Feedback : 
+Le cours sur les principes SOLID était très intéressant. J’ai particulièrement apprécié que ce soit un intervenant qui nous montre directement les principes au tableau, avec des exemples pratiques et concrets. Cela rend l’apprentissage plus concret et plus facile à comprendre, surtout pour voir comment appliquer les principes dans du vrai code.
+
 # Refactoring Golf
 ![illustration code golf]( ./code_golf.png "it's you 😅")
 
