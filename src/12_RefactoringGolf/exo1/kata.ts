@@ -1,76 +1,58 @@
 /* eslint-disable */
 
-// read the code
 export class Game {
-  private _lastSymbol = " ";
-  private _toto: Board = new Board();
+  private lastSymbol: string = " ";
+  private board: Board = new Board();
 
   public Play(symbol: string, x: number, y: number): void {
-    //if first move
-    if (this._lastSymbol == " ") {
-      //if player is X
-      if (symbol == "O") {
-        throw new Error("Invalid first player");
-      }
+    this.checkFirstMove(symbol);
+    this.checkNextPlayer(symbol);
+    this.checkPosition(x, y);
+
+    this.playMove(symbol, x, y);
+  }
+
+  private checkFirstMove(symbol: string): void {
+    if (this.lastSymbol === " " && symbol === "O") {
+      throw new Error("Invalid first player");
     }
-    //if not first move but player repeated
-    else if (symbol == this._lastSymbol) {
+  }
+
+  private checkNextPlayer(symbol: string): void {
+    if (this.lastSymbol === symbol) {
       throw new Error("Invalid next player");
     }
-    //if not first move but play on an already played tile
-    else if (this._toto.TileAt(x, y).Symbol != " ") {
+  }
+
+  private checkPosition(x: number, y: number): void {
+    if (this.board.TileAt(x, y).Symbol !== " ") {
       throw new Error("Invalid position");
     }
+  }
 
-    // update game state
-    this._lastSymbol = symbol;
-    this._toto.AddTileAt(symbol, x, y);
+  private playMove(symbol: string, x: number, y: number): void {
+    this.board.AddTileAt(symbol, x, y);
+    this.lastSymbol = symbol;
   }
 
   public Winner(): string {
-    //if the positions in first row are taken
-    if (
-      this._toto.TileAt(0, 0)!.Symbol != " " &&
-      this._toto.TileAt(0, 1)!.Symbol != " " &&
-      this._toto.TileAt(0, 2)!.Symbol != " "
-    ) {
-      //if first row is full with same symbol
-      if (
-        this._toto.TileAt(0, 0)!.Symbol == this._toto.TileAt(0, 1)!.Symbol &&
-        this._toto.TileAt(0, 2)!.Symbol == this._toto.TileAt(0, 1)!.Symbol
-      ) {
-        return this._toto.TileAt(0, 0)!.Symbol;
+    for (let row = 0; row < 3; row++) {
+      const winner = this.checkRow(row);
+      if (winner !== " ") {
+        return winner;
       }
     }
 
-    //if the positions in 2nd row are taken
-    if (
-      this._toto.TileAt(1, 0)!.Symbol != " " &&
-      this._toto.TileAt(1, 1)!.Symbol != " " &&
-      this._toto.TileAt(1, 2)!.Symbol != " "
-    ) {
-      //if middle row is full with same symbol
-      if (
-        this._toto.TileAt(1, 0)!.Symbol == this._toto.TileAt(1, 1)!.Symbol &&
-        this._toto.TileAt(1, 2)!.Symbol == this._toto.TileAt(1, 1)!.Symbol
-      ) {
-        return this._toto.TileAt(1, 0)!.Symbol;
-      }
-    }
+    return " ";
+  }
 
-    //if the positions in 2nd row are taken
-    if (
-      this._toto.TileAt(2, 0)!.Symbol != " " &&
-      this._toto.TileAt(2, 1)!.Symbol != " " &&
-      this._toto.TileAt(2, 2)!.Symbol != " "
-    ) {
-      //if middle row is full with same symbol
-      if (
-        this._toto.TileAt(2, 0)!.Symbol == this._toto.TileAt(2, 1)!.Symbol &&
-        this._toto.TileAt(2, 2)!.Symbol == this._toto.TileAt(2, 1)!.Symbol
-      ) {
-        return this._toto.TileAt(2, 0)!.Symbol;
-      }
+  private checkRow(row: number): string {
+    const first = this.board.TileAt(row, 0).Symbol;
+    const second = this.board.TileAt(row, 1).Symbol;
+    const third = this.board.TileAt(row, 2).Symbol;
+
+    if (first !== " " && first === second && second === third) {
+      return first;
     }
 
     return " ";
@@ -84,32 +66,26 @@ interface Tile {
 }
 
 class Board {
-  private _plays: Tile[] = [];
+  private tiles: Tile[] = [];
 
   constructor() {
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        const tile: Tile = { X: i, Y: j, Symbol: " " };
-        this._plays.push(tile);
+    this.createBoard();
+  }
+
+  private createBoard(): void {
+    for (let x = 0; x < 3; x++) {
+      for (let y = 0; y < 3; y++) {
+        this.tiles.push({ X: x, Y: y, Symbol: " " });
       }
     }
   }
 
   public TileAt(x: number, y: number): Tile {
-    return this._plays.find((t: Tile) => t.X == x && t.Y == y)!;
+    return this.tiles.find(t => t.X === x && t.Y === y)!;
   }
 
   public AddTileAt(symbol: string, x: number, y: number): void {
-    //@ts-ignore
-    const tile: Tile = { X: x, Y: y, Symbol: symbol };
-
-    this._plays.find((t: Tile) => t.X == x && t.Y == y)!.Symbol = symbol;
+    const tile = this.TileAt(x, y);
+    tile.Symbol = symbol;
   }
 }
-
-// create a PR,
-// fix indentation first
-//  commit and push
-// make your comments,
-// then refactor
-// submit your PR for review
