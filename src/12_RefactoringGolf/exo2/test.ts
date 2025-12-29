@@ -109,4 +109,40 @@ describe("TicTacToe game", () => {
 
     expect(winner).toBe("O");
   });
+
+  describe("Board initialization", () => {
+    it("should create a 3x3 board (9 tiles total)", () => {
+      const board = (game as any)._board;
+      expect(board._plays.length).toBe(9);
+    });
+
+    it("should not find tiles outside of the 3x3 boundaries", () => {
+      const board = (game as any)._board;
+      expect(board.TileAt(0, 0)).toBeDefined();
+      expect(board.TileAt(2, 2)).toBeDefined();
+      expect(board.TileAt(3, 3)).toBeUndefined();
+    });
+  });
+
+  describe("Error messages", () => {
+    test('should throw "Invalid first player" when O starts', () => {
+      expect(() => {
+        game.Play("O", 0, 0);
+      }).toThrow("Invalid first player");
+    });
+
+    it('should throw "Invalid next player" when same player plays twice', () => {
+      game.Play("X", 0, 0);
+      expect(() => {
+        game.Play("X", 1, 1);
+      }).toThrow("Invalid next player");
+    });
+
+    it('should throw "Invalid position" when playing on an occupied tile', () => {
+      game.Play("X", 0, 0);
+      expect(() => {
+        game.Play("O", 0, 0);
+      }).toThrow("Invalid position");
+    });
+  });
 });
